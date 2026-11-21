@@ -1,13 +1,15 @@
 #include "UsersManager.h"
+using namespace std;
 
-UsersManager::UsersManager() {
+UsersManager::UsersManager(const string &path) {
     last_id = 0;
+    file_path = path;
 }
 
 void UsersManager::LoadDatabase() {
     last_id = 0;
     userame_userobject_map.clear();
-    vector<string> lines = Helper::ReadFileLines("18_users.txt");
+    vector<string> lines = Helper::ReadFileLines(file_path);
     for (auto &line : lines) {
         User user(line);
         userame_userobject_map[user.GetUserName()] = user;
@@ -76,20 +78,21 @@ void UsersManager::ListUsersNamesIds() {
 }
 
 pair<int, int> UsersManager::ReadUserId() {
-    int user_id;
-    cout << "Enter User id or -1 to cancel: ";
-    cin >> user_id;
-    if (user_id == -1) return make_pair(-1, -1);
-    for (auto &pair : userame_userobject_map) {
-        if (pair.second.GetUserId() == user_id)
-            return make_pair(user_id, pair.second.GetAllowAnonymousQuestions());
+    while (true) {
+        int user_id;
+        cout << "Enter User id or -1 to cancel: ";
+        cin >> user_id;
+        if (user_id == -1) return make_pair(-1, -1);
+        for (auto &pair : userame_userobject_map) {
+            if (pair.second.GetUserId() == user_id)
+                return make_pair(user_id, pair.second.GetAllowAnonymousQuestions());
+        }
+        cout << "Invalid User ID. Try again\n";
     }
-    cout << "Invalid User ID. Try again\n";
-    return ReadUserId();
 }
 
 void UsersManager::UpdateDatabase(const User &user) {
     vector<string> lines;
     lines.push_back(user.ToString());
-    Helper::WriteFileLines("18_users.txt", lines);
+    Helper::WriteFileLines(file_path, lines);
 }
