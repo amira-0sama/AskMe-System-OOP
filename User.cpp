@@ -1,4 +1,5 @@
 #include "User.h"
+using namespace std;
 
 User::User() {
     user_id = allow_anonymous_questions = -1;
