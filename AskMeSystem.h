@@ -10,7 +10,7 @@ private:
     QuestionsManager questions_manager;
 
 public:
-    void LoadDatabase(bool fill_user_questions = false);
+    void LoadDatabase();
     void run();
 };
 
