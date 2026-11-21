@@ -1,7 +1,9 @@
 #include "QuestionsManager.h"
+using namespace std;
 
-QuestionsManager::QuestionsManager() {
+QuestionsManager::QuestionsManager(const string &path) {
     last_id = 0;
+    file_path = path;
 }
 
 void QuestionsManager::LoadDatabase() {
@@ -9,7 +11,7 @@ void QuestionsManager::LoadDatabase() {
     questionid_questionidsThead_to_map.clear();
     questionid_questionobject_map.clear();
 
-    vector<string> lines = Helper::ReadFileLines("18_questions.txt");
+    vector<string> lines = Helper::ReadFileLines(file_path);
     for (auto &line : lines) {
         Question question(line);
         last_id = max(last_id, question.GetQuestionId());
@@ -22,73 +24,67 @@ void QuestionsManager::LoadDatabase() {
     }
 }
 
-void QuestionsManager::FillUserQuestions(User &user) {
-    user.questions_id_from_me.clear();
-    user.questionid_questionidsThead_to_map.clear();
-
+void QuestionsManager::PrintUserToQuestions(User &user) {
+    cout << "\n";
+    bool found = false;
     for (auto &pair : questionid_questionidsThead_to_map) {
         for (auto &question_id : pair.second) {
             Question &question = questionid_questionobject_map[question_id];
-            if (question.GetFromUserId() == user.GetUserId())
-                user.questions_id_from_me.push_back(question.GetQuestionId());
-
-            if (question.GetToUserId() == user.GetUserId()) {
-                if (question.GetParentQuestionId() == -1)
-                    user.questionid_questionidsThead_to_map[question.GetQuestionId()].push_back(question.GetQuestionId());
-                else
-                    user.questionid_questionidsThead_to_map[question.GetParentQuestionId()].push_back(question.GetQuestionId());
-            }
+            if (question.GetToUserId() != user.GetUserId()) continue;
+            question.PrintToQuestion();
+            found = true;
         }
     }
-}
-
-void QuestionsManager::PrintUserToQuestions(User &user) {
-    cout << "\n";
-    if (user.questionid_questionidsThead_to_map.empty()) cout << "No Questions";
-    for (auto &pair : user.questionid_questionidsThead_to_map) {
-        for (auto &question_id : pair.second)
-            questionid_questionobject_map[question_id].PrintToQuestion();
-    }
+    if (!found) cout << "No Questions";
     cout << "\n";
 }
 
 void QuestionsManager::PrintUserFromQuestions(User &user) {
     cout << "\n";
-    if (user.questions_id_from_me.empty()) cout << "No Questions";
-    for (auto &question_id : user.questions_id_from_me)
-        questionid_questionobject_map[question_id].PrintFromQuestion();
+    bool found = false;
+    for (auto &pair : questionid_questionidsThead_to_map) {
+        for (auto &question_id : pair.second) {
+            Question &question = questionid_questionobject_map[question_id];
+            if (question.GetFromUserId() != user.GetUserId()) continue;
+            question.PrintFromQuestion();
+            found = true;
+        }
+    }
+    if (!found) cout << "No Questions";
     cout << "\n";
 }
 
 int QuestionsManager::ReadQuestionIdAny(User &user) {
-    int question_id;
-    cout << "Enter Question id or -1 to cancel: ";
-    cin >> question_id;
-    if (question_id == -1) return -1;
-
-    if (!questionid_questionobject_map.count(question_id)) {
-        cout << "\nERROR: No question with such ID. Try again\n\n";
-        return ReadQuestionIdAny(user);
+    while (true) {
+        int question_id;
+        cout << "Enter Question id or -1 to cancel: ";
+        cin >> question_id;
+        if (question_id == -1) return -1;
+        if (!questionid_questionobject_map.count(question_id)) {
+            cout << "\nERROR: No question with such ID. Try again\n\n";
+            continue;
+        }
+        Question &question = questionid_questionobject_map[question_id];
+        if (question.GetToUserId() != user.GetUserId()) {
+            cout << "\nERROR: Invalid question ID. Try again\n\n";
+            continue;
+        }
+        return question_id;
     }
-    Question &question = questionid_questionobject_map[question_id];
-    if (question.GetToUserId() != user.GetUserId()) {
-        cout << "\nERROR: Invalid question ID. Try again\n\n";
-        return ReadQuestionIdAny(user);
-    }
-    return question_id;
 }
 
 int QuestionsManager::ReadQuestionIdThread(User &user) {
-    int question_id;
-    cout << "For thread question: Enter Question id or -1 for new question: ";
-    cin >> question_id;
-    if (question_id == -1) return -1;
-
-    if (!questionid_questionidsThead_to_map.count(question_id)) {
-        cout << "No thread question with such ID. Try again\n";
-        return ReadQuestionIdThread(user);
+    while (true) {
+        int question_id;
+        cout << "For thread question: Enter Question id or -1 for new question: ";
+        cin >> question_id;
+        if (question_id == -1) return -1;
+        if (!questionid_questionidsThead_to_map.count(question_id)) {
+            cout << "No thread question with such ID. Try again\n";
+            continue;
+        }
+        return question_id;
     }
-    return question_id;
 }
 
 void QuestionsManager::AnswerQuestion(User &user) {
@@ -174,5 +170,5 @@ void QuestionsManager::UpdateDatabase() {
     vector<string> lines;
     for (auto &pair : questionid_questionobject_map)
         lines.push_back(pair.second.ToString());
-    Helper::WriteFileLines("18_questions.txt", lines, false);
+    Helper::WriteFileLines(file_path, lines, false);
 }
