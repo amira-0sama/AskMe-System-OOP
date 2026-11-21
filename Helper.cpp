@@ -1,4 +1,5 @@
 #include "Helper.h"
+using namespace std;
 
 vector<string> Helper::ReadFileLines(const string &path) {
     vector<string> lines;
@@ -50,12 +51,14 @@ int Helper::ToInt(const string &str) {
 }
 
 int Helper::ReadInt(int low, int high) {
-    cout << "\nEnter number in range " << low << " - " << high << ": ";
-    int value;
-    cin >> value;
-    if (value >= low && value <= high) return value;
-    cout << "ERROR: invalid number...Try again\n";
-    return ReadInt(low, high);
+    while (true) {
+        cout << "\nEnter number in range " << low << " - " << high << ": ";
+        int value;
+        if (cin >> value && value >= low && value <= high) return value;
+        cout << "ERROR: invalid number...Try again\n";
+        cin.clear();
+        cin.ignore(10000, '\n');
+    }
 }
 
 int Helper::ShowReadMenu(const vector<string> &choices) {
