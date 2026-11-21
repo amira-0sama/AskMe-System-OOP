@@ -1,4 +1,5 @@
 #include "Question.h"
+using namespace std;
 
 Question::Question() {
     question_id = parent_question_id = from_user_id = to_user_id = -1;
